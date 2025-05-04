@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UniversalNet;
+namespace UniversalNet.Middlewares;
 
 public class PacketDecodeMiddleware<T> : IMiddleware<T> where T : notnull
 {

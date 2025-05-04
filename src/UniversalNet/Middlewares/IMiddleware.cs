@@ -1,5 +1,4 @@
-
-namespace UniversalNet;
+namespace UniversalNet.Middlewares;
 
 public interface IMiddleware<T> where T : notnull
 {

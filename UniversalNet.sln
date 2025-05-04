@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalNet.MemoryPack", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalNet.Kestrel", "src\UniversalNet.Kestrel\UniversalNet.Kestrel.csproj", "{F0F4E619-3744-455B-9017-88B89705AE1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample", "src\Sample\Sample.csproj", "{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,18 @@ Global
 		{F0F4E619-3744-455B-9017-88B89705AE1C}.Release|x64.Build.0 = Release|Any CPU
 		{F0F4E619-3744-455B-9017-88B89705AE1C}.Release|x86.ActiveCfg = Release|Any CPU
 		{F0F4E619-3744-455B-9017-88B89705AE1C}.Release|x86.Build.0 = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|x64.Build.0 = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Debug|x86.Build.0 = Debug|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|x64.ActiveCfg = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|x64.Build.0 = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|x86.ActiveCfg = Release|Any CPU
+		{95DC409D-B20A-46D9-A5D5-3B9B80407FEA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

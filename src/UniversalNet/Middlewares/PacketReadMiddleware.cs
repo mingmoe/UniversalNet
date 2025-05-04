@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
 
-namespace UniversalNet.Kestrel;
+namespace UniversalNet.Middlewares;
 
 /// <summary>
 /// 使用这个中间件,我们必须保证所有<see cref="IConnectionContext{T}.PacketToParse"/>都在下个中间件被处理.
