@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/UniversalNet.Kestrel/UniversalNet.Kestrel.csproj" />
+    <Project Path="src/UniversalNet.MemoryPack/UniversalNet.MemoryPack.csproj" />
+    <Project Path="src/UniversalNet/UniversalNet.csproj" />
+  </Folder>
+</Solution>
