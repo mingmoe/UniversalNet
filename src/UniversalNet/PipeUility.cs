@@ -8,53 +8,79 @@ using System.Net;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UniversalNet;
 
 public static class PipeUility
 {
-
-    [MustDisposeResource]
-    public readonly struct ReadResult : IDisposable
+    public readonly struct ReadResult
     {
         public required PipeReader Reader { get; init; }
-        public required ReadOnlySequence<byte> Buffer { get; init; }
-        public required SequencePosition AdvancedTo { get; init; }
 
-        public void Dispose()
+        public required ReadOnlySequence<byte> Buffer { get; init; }
+
+        public required long Offset { get; init; }
+
+        public required long Length { get; init; }
+
+        public readonly SequencePosition SlicedStart => Buffer.GetPosition(Offset);
+        public readonly SequencePosition SlicedEnd => Buffer.GetPosition(Offset + Length);
+
+        public readonly ReadOnlySequence<byte> SlicedBuffer => Buffer.Slice(Offset, Length);
+
+        public ReadResult() { }
+
+        public readonly void Examine()
         {
-            Reader.AdvanceTo(AdvancedTo);
-            GC.SuppressFinalize(this);
+            Reader.AdvanceTo(Buffer.Start, SlicedEnd);
+        }
+
+        public readonly void Consume()
+        {
+            Reader.AdvanceTo(SlicedEnd);
         }
     }
 
-    public static async Task<ReadResult> Read(PipeReader input, int length, CancellationToken token)
+    public static ReadResult? TryRead(PipeReader input, long length, long offset = 0)
     {
-        var result = await input.ReadAtLeastAsync(length, token).ConfigureAwait(false);
+        var result = input.TryRead(out var read);
 
-        if (result.IsCanceled || result.IsCompleted)
+        if (!result)
         {
-            throw new OperationCanceledException();
+            return null;
         }
 
-        return new ReadResult
+        if (read.Buffer.Length < (offset + length))
+        {
+            input.AdvanceTo(read.Buffer.Start, read.Buffer.End);
+            return null;
+        }
+
+        return new ReadResult()
         {
             Reader = input,
-            Buffer = result.Buffer.Slice(result.Buffer.Start, length),
-            AdvancedTo = result.Buffer.GetPosition(length)
+            Buffer = read.Buffer,
+            Length = length,
+            Offset = offset
         };
     }
 
-    public static async Task<int> ReadInt(PipeReader input, CancellationToken token)
+    public static (int, ReadResult)? TryReadInternetInt(PipeReader input, long offset = 0)
     {
-        using var read = await Read(input, sizeof(int), token).ConfigureAwait(false);
+        var read = TryRead(input, sizeof(int), offset);
 
-        var result = BitConverter.ToInt32(read.Buffer.ToArray());
+        if (read == null)
+        {
+            return null;
+        }
+
+        var result = BitConverter.ToInt32(read.Value.SlicedBuffer.ToArray());
 
         result = IPAddress.NetworkToHostOrder(result);
 
-        return result;
+        return (result, read.Value);
     }
 
 }

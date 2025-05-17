@@ -9,6 +9,12 @@ namespace UniversalNet.Middlewares;
 
 public class PacketDispatchMiddleware<T> : IMiddleware<T> where T : notnull
 {
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+
     public required ILogger<PacketDispatchMiddleware<T>> Logger { get; init; }
 
     public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddle next)

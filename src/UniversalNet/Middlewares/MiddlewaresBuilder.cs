@@ -7,15 +7,16 @@ using System.Threading.Tasks;
 namespace UniversalNet.Middlewares;
 public sealed class MiddlewaresBuilder<T> where T : notnull
 {
+    public IServiceProvider? ServiceProvider { get; init; }
     public List<Func<IMiddleware<T>, IMiddleware<T>>> Transformers { get; } = [];
 
     public List<IMiddleware<T>> BeforeRead { get; } = [];
 
     public IMiddleware<T>? ReadMiddleware { get; set; }
 
-    public List<IMiddleware<T>> BeforeParse { get; } = [];
+    public List<IMiddleware<T>> BeforeDecode { get; } = [];
 
-    public IMiddleware<T>? ParseMiddleware { get; set; }
+    public IMiddleware<T>? DecodeMiddleware { get; set; }
 
     public List<IMiddleware<T>> BeforeDispatch { get; } = [];
 
@@ -31,14 +32,20 @@ public sealed class MiddlewaresBuilder<T> where T : notnull
 
     public List<IMiddleware<T>> AfterWrite { get; } = [];
 
-    public IEnumerable<IMiddleware<T>>? Build()
+    public event EventHandler<MiddlewaresBuilder<T>> BeforeBuild = (_, _) => { };
+
+    public event EventHandler<IList<IMiddleware<T>>> AfterBuild = (_, _) => { };
+
+    public IEnumerable<IMiddleware<T>> Build()
     {
         List<IMiddleware<T>?> results = [];
 
+        BeforeBuild(this, this);
+
         results.AddRange(BeforeRead);
         results.Add(ReadMiddleware);
-        results.AddRange(BeforeParse);
-        results.Add(ParseMiddleware);
+        results.AddRange(BeforeDecode);
+        results.Add(DecodeMiddleware);
         results.AddRange(BeforeDispatch);
         results.Add(DispatchMiddleware);
         results.AddRange(BeforeEncode);
@@ -49,7 +56,9 @@ public sealed class MiddlewaresBuilder<T> where T : notnull
 
         results.RemoveAll((m) => m is null);
 
-        return results.Select(transform);
+        var output = results.Select(transform).ToList();
+        AfterBuild(this, output);
+        return output;
 
         IMiddleware<T> transform(IMiddleware<T>? middleware)
         {
@@ -59,5 +68,33 @@ public sealed class MiddlewaresBuilder<T> where T : notnull
             }
             return middleware!;
         }
+    }
+
+    public MiddlewaresBuilder()
+    {
+    }
+
+    public MiddlewaresBuilder(IServiceProvider? serviceProvider)
+    {
+        ServiceProvider = serviceProvider;
+    }
+
+    public static IEnumerable<IMiddleware<T>> BuildFromServices(IServiceProvider provider)
+    {
+        var middlewares = (IEnumerable<IMiddlewareRegister<T>>?)provider.GetService(typeof(IEnumerable<IMiddlewareRegister<T>>));
+
+        if (middlewares is null)
+        {
+            return [];
+        }
+
+        MiddlewaresBuilder<T> builder = new(provider);
+
+        foreach (var middleware in middlewares)
+        {
+            middleware.Register(builder);
+        }
+
+        return builder.Build();
     }
 }

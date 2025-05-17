@@ -8,14 +8,20 @@ namespace UniversalNet.Middlewares;
 
 public class PacketDecodeMiddleware<T> : IMiddleware<T> where T : notnull
 {
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
 
     public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddle next)
     {
         while (context.PacketToParse.Reader.TryRead(out var packet))
         {
-            var parsed = context.Packetizer.Decode(packet.Id, packet.Data);
+            var id = context.Packetizer.DecodeId(packet.Id);
+            var decoded = context.Packetizer.Decode(id, packet.Data);
 
-            await context.PacketToDispatch.Writer.WriteAsync(new(packet.Id, parsed)).ConfigureAwait(false);
+            await context.PacketToDispatch.Writer.WriteAsync(new(id, decoded)).ConfigureAwait(false);
         }
 
         await next(context).ConfigureAwait(false);

@@ -8,5 +8,7 @@
     <Project Path="src/UniversalNet.Kestrel/UniversalNet.Kestrel.csproj" />
     <Project Path="src/UniversalNet.MemoryPack/UniversalNet.MemoryPack.csproj" />
     <Project Path="src/UniversalNet/UniversalNet.csproj" />
+    <Project Path="src/Sample/Sample.csproj" />
+    <Project Path="src/UniversalNet.Autofac/UniversalNet.Autofac.csproj" />
   </Folder>
-</Solution>
+  </Solution>

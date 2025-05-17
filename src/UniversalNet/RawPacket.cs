@@ -7,15 +7,15 @@ public struct RawPacket<T> where T : notnull
 {
     public ReadOnlySequence<byte> Data { get; set; }
 
-    public T Id { get; set; }
+    public ReadOnlySequence<byte> Id { get; set; }
 
-    public RawPacket(T Id)
+    public RawPacket(ReadOnlySequence<byte> Id)
     {
         Data = new();
         this.Id = Id;
     }
 
-    public RawPacket(T Id, ReadOnlySequence<byte> data)
+    public RawPacket(ReadOnlySequence<byte> Id, ReadOnlySequence<byte> data)
     {
         Data = data;
         this.Id = Id;

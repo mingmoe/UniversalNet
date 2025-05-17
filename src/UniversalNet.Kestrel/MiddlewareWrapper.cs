@@ -14,9 +14,9 @@ public sealed class MiddlewareWrapper<T> where T : notnull
     {
         if (context is KestrelConnectionContext<T> con)
         {
-            await Middleware.InvokeAsync(con, (context) =>
+            await Middleware.InvokeAsync(con, async (context) =>
             {
-                return callback.Invoke((KestrelConnectionContext<T>)context!);
+                await callback.Invoke((KestrelConnectionContext<T>)context!);
             });
             return;
         }
@@ -28,9 +28,9 @@ public sealed class MiddlewareWrapper<T> where T : notnull
             throw new InvalidOperationException($"The context is not a {typeof(KestrelConnectionContext<T>).FullName}.");
         }
 
-        await Middleware.InvokeAsync((KestrelConnectionContext<T>)context.Items[key]!, (context) =>
+        await Middleware.InvokeAsync((KestrelConnectionContext<T>)context.Items[key]!, async (context) =>
         {
-            return callback.Invoke((KestrelConnectionContext<T>)context!);
+            await callback.Invoke((KestrelConnectionContext<T>)context!);
         });
     }
 }

@@ -5,53 +5,66 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace UniversalNet.Kestrel;
 
-public class KestrelConnectionContext<T>(ConnectionContext connectionContext) : ConnectionContext,IConnectionContext<T> where T : notnull
+public class KestrelConnectionContext<T>(ConnectionContext connectionContext) : ConnectionContext, IConnectionContext<T> where T : notnull
 {
-    public override string ConnectionId {
-        get{
+    public override string ConnectionId
+    {
+        get
+        {
             return connectionContext.ConnectionId;
         }
         set
         {
-            connectionContext.ConnectionId = value;   
+            connectionContext.ConnectionId = value;
         }
     }
 
-    public required IDispatcher<T> Dispatcher {get;init;}
-    public required IPacketizer<T> Packetizer {get;init;}
-    public Channel<RawPacket<T>> PacketToParse {get;init;} = Channel.CreateUnbounded<RawPacket<T>>();
-    public Channel<ParsedPacket<T>> PacketToDispatch {get;init;} = Channel.CreateUnbounded<ParsedPacket<T>>();
-    public Channel<ParsedPacket<T>> PacketToSend {get;init;} = Channel.CreateUnbounded<ParsedPacket<T>>();
-    public Channel<RawPacket<T>> PacketToWrite {get;init;} = Channel.CreateUnbounded<RawPacket<T>>();
-    public override IDuplexPipe Transport {
-        get{
+    public required IDispatcher<T> Dispatcher { get; init; }
+    public required IPacketFormatters<T> Packetizer { get; init; }
+    public Channel<RawPacket<T>> PacketToParse { get; init; } = Channel.CreateUnbounded<RawPacket<T>>();
+    public Channel<ParsedPacket<T>> PacketToDispatch { get; init; } = Channel.CreateUnbounded<ParsedPacket<T>>();
+    public Channel<ParsedPacket<T>> PacketToSend { get; init; } = Channel.CreateUnbounded<ParsedPacket<T>>();
+    public Channel<RawPacket<T>> PacketToWrite { get; init; } = Channel.CreateUnbounded<RawPacket<T>>();
+    public override IDuplexPipe Transport
+    {
+        get
+        {
             return connectionContext.Transport;
         }
-        set{
+        set
+        {
             connectionContext.Transport = value;
         }
     }
 
-    public override IDictionary<object, object?> Items {
-        get{
+    public override IDictionary<object, object?> Items
+    {
+        get
+        {
             return connectionContext.Items;
         }
-        set{
+        set
+        {
             connectionContext.Items = value;
         }
     }
 
-    public override CancellationToken ConnectionClosed {
-        get{
+    public override CancellationToken ConnectionClosed
+    {
+        get
+        {
             return connectionContext.ConnectionClosed;
         }
-        set{
+        set
+        {
             connectionContext.ConnectionClosed = value;
         }
     }
 
-    public override IFeatureCollection Features{
-        get{
+    public override IFeatureCollection Features
+    {
+        get
+        {
             return connectionContext.Features;
         }
     }

@@ -6,11 +6,10 @@ namespace UniversalNet;
 
 /// <summary>
 ///     包序列化/逆序列化器.
-///     要求是线程安全的.
 /// </summary>
-public interface IPacketizer<T> where T : notnull
+public interface IPacketFormatters<T> where T : notnull
 {
-    ConcurrentDictionary<T, IPacketFormatter<T>> Formatters { get; }
+    IDictionary<T, IPacketFormatter<T>> Formatters { get; }
 
     T DecodeId(ReadOnlySequence<byte> data);
 
