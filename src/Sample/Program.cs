@@ -1,4 +1,7 @@
-﻿using MemoryPack;
+﻿using Autofac;
+using Autofac.Core;
+using Autofac.Extensions.DependencyInjection;
+using MemoryPack;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -16,6 +19,7 @@ using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.Unicode;
 using UniversalNet;
+using UniversalNet.Autofac;
 using UniversalNet.Kestrel;
 using UniversalNet.MemoryPack;
 using UniversalNet.Middlewares;
@@ -113,7 +117,7 @@ public class Program
             return ValueTask.CompletedTask;
         }
 
-        public async Task InvokeAsync(IConnectionContext<string> context, IMiddleware<string>.NextMiddle next)
+        public async Task InvokeAsync(IConnectionContext<string> context, IMiddleware<string>.NextMiddleware next)
         {
             if (!sent)
             {
@@ -154,7 +158,53 @@ public class Program
         }
     }
 
-    static void SampleHost(int port, bool registerConsoleRead)
+    static IServiceProvider SampleAutofacHost(int port, bool registerConsoleRead)
+    {
+        ContainerBuilder builder = new();
+
+        // logger
+        var factory = LoggerFactory.Create(static builder =>
+        {
+            builder
+                .AddConsole();
+        });
+        builder.RegisterInstance(factory).As<ILoggerFactory>().SingleInstance();
+        builder.RegisterGeneric(typeof(Logger<>)).As(typeof(ILogger<>)).SingleInstance();
+
+        // universal net
+        var module = new UniversalNetModule<string, UniversalNet.StringPacketFormatter>();
+        module.ConfigureServer.Add((options) =>
+        {
+            options.AddServerHeader = false;
+            options.Listen(IPAddress.Loopback, port, configure =>
+            {
+                configure.UseUniversalNet<string>();
+            });
+        });
+        builder.RegisterModule(module);
+
+        // packet formatter and handler
+        builder.RegisterType<MemorypackPacketFormatter<string, KeyValuePacket>>().AsSelf().SingleInstance();
+        builder.RegisterType<KeyValuePacketHandler>().AsSelf().SingleInstance();
+        builder.RegisterType<PacketHandlerRegister<string, KeyValuePacketHandler>>().As<IDispatcherRegister<string>>().SingleInstance();
+        builder.RegisterType<PacketFormatterRegister<string, MemorypackPacketFormatter<string, KeyValuePacket>>>().As<IPacketFormatterRegister<string>>().SingleInstance();
+
+        builder.RegisterType<StringPacketFormatter>().AsSelf().SingleInstance();
+        builder.RegisterType<StringPacketHandler>().AsSelf().SingleInstance();
+        builder.RegisterType<PacketFormatterRegister<string, StringPacketFormatter>>().As<IPacketFormatterRegister<string>>().SingleInstance();
+        builder.RegisterType<PacketHandlerRegister<string, StringPacketHandler>>().As<IDispatcherRegister<string>>().SingleInstance();
+
+        if (registerConsoleRead)
+        {
+            builder.RegisterType<ConsoleInputMiddlewareRegister>().As<IMiddlewareRegister<string>>();
+        }
+
+        var container = builder.Build();
+        var serviceProvider = new AutofacServiceProvider(container);
+        return serviceProvider;
+    }
+
+    static IServiceProvider SampleHost(int port, bool registerConsoleRead)
     {
         HostBuilder builder = new();
 
@@ -220,12 +270,17 @@ public class Program
             });
 
         var host = builder.Build();
-        var server = host.Services.GetRequiredService<KestrelServer>();
-        var application = host.Services.GetRequiredService<IHttpApplication<string>>();
+        return host.Services;
+    }
+
+    static void Run(IServiceProvider provider)
+    {
+        var server = provider.GetRequiredService<KestrelServer>();
+        var application = provider.GetRequiredService<IHttpApplication<string>>();
         server.StartAsync(application, CancellationToken.None).Wait();
         CancellationTokenSource source = new();
         Console.CancelKeyPress += (_, _) => { source.Cancel(); };
-        source.Token.WaitHandle.WaitOne();
+        source.Token.WaitHandle.WaitOne(2000);
         server.StopAsync(CancellationToken.None);
     }
 
@@ -277,17 +332,38 @@ public class Program
 
     public static void Main(string[] args)
     {
-        Thread server = new(() => { SampleHost(9988, true); });
+        Console.WriteLine("-----TEST HOST-----");
+        // test classic
+        Thread server = new(() =>
+        {
+            Run(SampleHost(9988, true));
+        });
         server.Start();
-        Thread client = new(() => { SampleHost(9987, false); });
+        Thread client = new(() =>
+        {
+            Run(SampleHost(9987, false));
+        });
         client.Start();
-        Thread.Sleep(1000);
+        Thread.Sleep(500);
 
         var relay = Task.Run(async () => { await RelaySocket(9988, 9987); });
+
+        server.Join();
+        client.Join();
+        relay = null!;
+
+        // test new
+        Console.WriteLine("-----TEST AUTOFAC HOST-----");
+        server = new(() => { Run(SampleAutofacHost(9988, true)); });
+        server.Start();
+        client = new(() => { Run(SampleAutofacHost(9987, false)); });
+        client.Start();
+        Thread.Sleep(500);
+        relay = Task.Run(async () => { await RelaySocket(9988, 9987); });
 
         // clean
         server.Join();
         client.Join();
-        relay.Wait();
+        relay = null!;
     }
 }

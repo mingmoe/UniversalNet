@@ -30,6 +30,13 @@ public static class KestrelUtility
             }
         };
 
+        options.Use(async (c, n) =>
+        {
+            while (true)
+            {
+                await n(c);
+            }
+        });
         options.Use(initialMiddleware.InvokeAsync);
         foreach (var middleware in MiddlewareWrapper<T>.Transform(middlewares))
         {

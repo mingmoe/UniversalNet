@@ -8,7 +8,12 @@ namespace UniversalNet.Middlewares;
 public sealed class MiddlewaresBuilder<T> where T : notnull
 {
     public IServiceProvider? ServiceProvider { get; init; }
+
     public List<Func<IMiddleware<T>, IMiddleware<T>>> Transformers { get; } = [];
+
+    public List<IMiddleware<T>> BeforeHandleException { get; } = [];
+
+    public IMiddleware<T>? ExceptionHandler { get; set; }
 
     public List<IMiddleware<T>> BeforeRead { get; } = [];
 
@@ -42,6 +47,8 @@ public sealed class MiddlewaresBuilder<T> where T : notnull
 
         BeforeBuild(this, this);
 
+        results.AddRange(BeforeHandleException);
+        results.Add(ExceptionHandler);
         results.AddRange(BeforeRead);
         results.Add(ReadMiddleware);
         results.AddRange(BeforeDecode);

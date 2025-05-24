@@ -14,7 +14,7 @@ public class PacketEncodeMiddleware<T> : IMiddleware<T> where T : notnull
         return ValueTask.CompletedTask;
     }
 
-    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddle next)
+    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddleware next)
     {
         while (context.PacketToSend.Reader.TryRead(out var packet))
         {

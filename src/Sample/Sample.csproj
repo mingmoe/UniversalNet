@@ -8,6 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\UniversalNet.Autofac\UniversalNet.Autofac.csproj" />
 		<ProjectReference Include="..\UniversalNet.Kestrel\UniversalNet.Kestrel.csproj" />
 		<ProjectReference Include="..\UniversalNet.MemoryPack\UniversalNet.MemoryPack.csproj" />
 	</ItemGroup>

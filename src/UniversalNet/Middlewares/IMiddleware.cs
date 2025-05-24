@@ -6,7 +6,7 @@ namespace UniversalNet.Middlewares;
 /// <typeparam name="T"></typeparam>
 public interface IMiddleware<T> : IAsyncDisposable where T : notnull
 {
-    delegate Task NextMiddle(IConnectionContext<T> context);
+    delegate Task NextMiddleware(IConnectionContext<T> context);
 
-    Task InvokeAsync(IConnectionContext<T> context, NextMiddle next);
+    Task InvokeAsync(IConnectionContext<T> context, NextMiddleware next);
 }

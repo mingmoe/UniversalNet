@@ -22,6 +22,7 @@ public static class ServiceCollectionHelper
     public static void UseAndInitiateStandardMiddlewares<T>(this IServiceCollection services)
         where T : notnull
     {
+        services.AddSingleton<ExceptionHandlerMiddleware<T>>();
         services.AddSingleton<PacketReadMiddleware<T>>();
         services.AddSingleton<PacketDecodeMiddleware<T>>();
         services.AddSingleton<PacketDispatchMiddleware<T>>();

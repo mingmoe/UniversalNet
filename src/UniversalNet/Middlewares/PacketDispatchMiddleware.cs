@@ -17,7 +17,7 @@ public class PacketDispatchMiddleware<T> : IMiddleware<T> where T : notnull
 
     public required ILogger<PacketDispatchMiddleware<T>> Logger { get; init; }
 
-    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddle next)
+    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddleware next)
     {
         while (context.PacketToDispatch.Reader.TryRead(out var packet))
         {

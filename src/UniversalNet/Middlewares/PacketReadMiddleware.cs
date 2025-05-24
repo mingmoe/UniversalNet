@@ -104,31 +104,33 @@ public class PacketReadMiddleware<T> : IMiddleware<T> where T : notnull
         }
     }
 
-    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddle next)
+    private const string Key = $"{nameof(PacketReadMiddleware<T>)}.PacketRead";
+
+    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddleware next)
     {
         var input = context.Transport.Input;
         var token = context.ConnectionClosed;
-        var read = new PacketRead() { Reader = input };
+        var read = context.Items[Key];
 
-        while (!token.IsCancellationRequested)
+        if (read == null)
         {
-            await next.Invoke(context).ConfigureAwait(false);
+            read = new PacketRead() { Reader = input };
+            context.Items[Key] = read;
+        }
 
-            if (read.TryRead(out var readResult, out var packet))
+        if (((PacketRead)read).TryRead(out var readResult, out var packet))
+        {
+            try
             {
-                try
-                {
-                    await context.PacketToParse.Writer.WriteAsync(packet.Value, token).ConfigureAwait(false);
-                    await next.Invoke(context).ConfigureAwait(false);
-                }
-                finally
-                {
-                    readResult.Value.Consume();
-                }
+                await context.PacketToParse.Writer.WriteAsync(packet.Value, token).ConfigureAwait(false);
+                await next.Invoke(context).ConfigureAwait(false);
+            }
+            finally
+            {
+                readResult.Value.Consume();
             }
         }
 
-        // process the packet
         await next.Invoke(context).ConfigureAwait(false);
     }
 }

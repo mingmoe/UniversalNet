@@ -16,6 +16,7 @@ public sealed class DefaultMiddlewaresRegister<T> : IMiddlewareRegister<T> where
             throw new InvalidOperationException("The argument builder must work with service provider.");
         }
 
+        builder.ExceptionHandler = builder.ServiceProvider.GetRequiredService<ExceptionHandlerMiddleware<T>>();
         builder.ReadMiddleware = builder.ServiceProvider.GetRequiredService<PacketReadMiddleware<T>>();
         builder.DecodeMiddleware = builder.ServiceProvider.GetRequiredService<PacketDecodeMiddleware<T>>();
         builder.DispatchMiddleware = builder.ServiceProvider.GetRequiredService<PacketDispatchMiddleware<T>>();
