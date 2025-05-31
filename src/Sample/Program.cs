@@ -286,48 +286,9 @@ public class Program
 
     static async Task RelaySocket(int receiverPort, int senderPort)
     {
-        using var receiver = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        await receiver.ConnectAsync(IPEndPoint.Parse($"127.0.0.1:{receiverPort}"));
+        RelaySocket relay = new($"127.0.0.1:{receiverPort}", $"127.0.0.1:{senderPort}");
 
-        using var sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        await sender.ConnectAsync(IPEndPoint.Parse($"127.0.0.1:{senderPort}"));
-
-        receiver.NoDelay = true;
-        sender.NoDelay = true;
-
-        var receiverBuffer = new byte[512];
-        var receiverTask = receiver.ReceiveAsync(receiverBuffer);
-
-        var senderBuffer = new byte[512];
-        var senderTask = sender.ReceiveAsync(senderBuffer);
-
-        while (true)
-        {
-            if (receiverTask.IsCompleted)
-            {
-                var length = await receiverTask!;
-                await sender.SendAsync(receiverBuffer[0..length], SocketFlags.None);
-                receiverTask = receiver.ReceiveAsync(receiverBuffer);
-            }
-            if (receiverTask.IsCanceled || receiverTask.IsFaulted)
-            {
-                break;
-            }
-            if (senderTask.IsCompleted)
-            {
-                var length = await senderTask!;
-                await receiver.SendAsync(senderBuffer[0..length], SocketFlags.None);
-                senderTask = sender.ReceiveAsync(senderBuffer);
-            }
-            if (senderTask.IsCanceled || senderTask.IsFaulted)
-            {
-                break;
-            }
-            await Task.Yield();
-        }
-
-        receiver.Close();
-        sender.Close();
+        await relay.Relay(true);
     }
 
     public static void Main(string[] args)
