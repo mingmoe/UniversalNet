@@ -5,32 +5,32 @@ namespace UniversalNet.Kestrel;
 
 public sealed class MiddlewareWrapper<T> where T : notnull
 {
-    public required IMiddleware<T> Middleware { get; init; }
+	public required IMiddleware<T> Middleware { get; init; }
 
-    public static IEnumerable<MiddlewareWrapper<T>> Transform(IEnumerable<IMiddleware<T>> middlewares)
-        => middlewares.Select(m => new MiddlewareWrapper<T> { Middleware = m });
+	public static IEnumerable<MiddlewareWrapper<T>> Transform(IEnumerable<IMiddleware<T>> middlewares)
+		=> middlewares.Select(m => new MiddlewareWrapper<T> { Middleware = m });
 
-    public async Task InvokeAsync(ConnectionContext context, ConnectionDelegate callback)
-    {
-        if (context is KestrelConnectionContext<T> con)
-        {
-            await Middleware.InvokeAsync(con, async (context) =>
-            {
-                await callback.Invoke((KestrelConnectionContext<T>)context!);
-            });
-            return;
-        }
+	public async Task InvokeAsync(ConnectionContext context, ConnectionDelegate callback)
+	{
+		if (context is KestrelConnectionContext<T> con)
+		{
+			await Middleware.InvokeAsync(con, async (context) =>
+			{
+				await callback.Invoke((KestrelConnectionContext<T>) context!);
+			});
+			return;
+		}
 
-        var key = KestrelInitlizeRawMiddleware<T>.GetContextKey();
+		var key = KestrelInitlizeRawMiddleware<T>.GetContextKey();
 
-        if (!context.Items.ContainsKey(key))
-        {
-            throw new InvalidOperationException($"The context is not a {typeof(KestrelConnectionContext<T>).FullName}.");
-        }
+		if (!context.Items.ContainsKey(key))
+		{
+			throw new InvalidOperationException($"The context is not a {typeof(KestrelConnectionContext<T>).FullName}.");
+		}
 
-        await Middleware.InvokeAsync((KestrelConnectionContext<T>)context.Items[key]!, async (context) =>
-        {
-            await callback.Invoke((KestrelConnectionContext<T>)context!);
-        });
-    }
+		await Middleware.InvokeAsync((KestrelConnectionContext<T>) context.Items[key]!, async (context) =>
+		{
+			await callback.Invoke((KestrelConnectionContext<T>) context!);
+		});
+	}
 }

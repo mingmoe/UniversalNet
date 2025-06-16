@@ -1,12 +1,8 @@
 
 using Microsoft.Extensions.Logging;
 using System.Buffers;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
-using System.Net;
-using System.Reflection.Metadata;
 using static UniversalNet.PipeUility;
 using ReadResult = UniversalNet.PipeUility.ReadResult;
 
@@ -19,118 +15,118 @@ namespace UniversalNet.Middlewares;
 /// <typeparam name="T"></typeparam>
 public class PacketReadMiddleware<T> : IMiddleware<T> where T : notnull
 {
-    public ValueTask DisposeAsync()
-    {
-        GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
-    }
+	public ValueTask DisposeAsync()
+	{
+		GC.SuppressFinalize(this);
+		return ValueTask.CompletedTask;
+	}
 
-    public required ILogger<PacketReadMiddleware<T>> Logger { get; init; }
+	public required ILogger<PacketReadMiddleware<T>> Logger { get; init; }
 
-    private sealed class PacketRead
-    {
-        public required PipeReader Reader { get; init; }
-        public int? IdLength { get; set; } = null;
-        public ReadOnlySequence<byte>? Id { get; set; } = null;
-        public int? PacketLength { get; set; } = null;
+	private sealed class PacketRead
+	{
+		public required PipeReader Reader { get; init; }
+		public int? IdLength { get; set; } = null;
+		public ReadOnlySequence<byte>? Id { get; set; } = null;
+		public int? PacketLength { get; set; } = null;
 
-        private void Reset()
-        {
-            IdLength = null;
-            Id = null;
-            PacketLength = null;
-        }
+		private void Reset()
+		{
+			IdLength = null;
+			Id = null;
+			PacketLength = null;
+		}
 
-        public bool TryRead(
-            [NotNullWhen(true)] out ReadResult? result,
-            [NotNullWhen(true)] out RawPacket<T>? packet)
-        {
-            result = null;
-            packet = null;
+		public bool TryRead(
+			[NotNullWhen(true)] out ReadResult? result,
+			[NotNullWhen(true)] out RawPacket<T>? packet)
+		{
+			result = null;
+			packet = null;
 
-            if (IdLength is null)
-            {
-                var read = TryReadInternetInt(Reader);
+			if (IdLength is null)
+			{
+				var read = TryReadInternetInt(Reader);
 
-                if (read is null)
-                {
-                    return false;
-                }
+				if (read is null)
+				{
+					return false;
+				}
 
-                IdLength = read.Value.Item1;
-                read.Value.Item2.Consume();
-            }
+				IdLength = read.Value.Item1;
+				read.Value.Item2.Consume();
+			}
 
-            if (Id is null)
-            {
-                var read = PipeUility.TryRead(Reader, IdLength.Value);
+			if (Id is null)
+			{
+				var read = PipeUility.TryRead(Reader, IdLength.Value);
 
-                if (read is null)
-                {
-                    return false;
-                }
+				if (read is null)
+				{
+					return false;
+				}
 
-                Id = read.Value.SlicedBuffer;
-                read.Value.Examine();
-            }
+				Id = read.Value.SlicedBuffer;
+				read.Value.Examine();
+			}
 
-            if (PacketLength is null)
-            {
-                var read = TryReadInternetInt(Reader, IdLength.Value);
+			if (PacketLength is null)
+			{
+				var read = TryReadInternetInt(Reader, IdLength.Value);
 
-                if (read is null)
-                {
-                    return false;
-                }
+				if (read is null)
+				{
+					return false;
+				}
 
-                PacketLength = read.Value.Item1;
-                read.Value.Item2.Examine();
-            }
+				PacketLength = read.Value.Item1;
+				read.Value.Item2.Examine();
+			}
 
-            result = PipeUility.TryRead(Reader, PacketLength.Value, IdLength.Value + sizeof(int));
+			result = PipeUility.TryRead(Reader, PacketLength.Value, IdLength.Value + sizeof(int));
 
-            if (result is null)
-            {
-                return false;
-            }
+			if (result is null)
+			{
+				return false;
+			}
 
-            // get it
-            packet = new(Id.Value, result.Value.SlicedBuffer);
+			// get it
+			packet = new(Id.Value, result.Value.SlicedBuffer);
 
-            // ready for next
-            Reset();
+			// ready for next
+			Reset();
 
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 
-    private const string Key = $"{nameof(PacketReadMiddleware<T>)}.PacketRead";
+	private const string Key = $"{nameof(PacketReadMiddleware<T>)}.PacketRead";
 
-    public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddleware next)
-    {
-        var input = context.Transport.Input;
-        var token = context.ConnectionClosed;
-        var read = context.Items[Key];
+	public async Task InvokeAsync(IConnectionContext<T> context, IMiddleware<T>.NextMiddleware next)
+	{
+		var input = context.Transport.Input;
+		var token = context.ConnectionClosed;
+		var read = context.Items[Key];
 
-        if (read == null)
-        {
-            read = new PacketRead() { Reader = input };
-            context.Items[Key] = read;
-        }
+		if (read == null)
+		{
+			read = new PacketRead() { Reader = input };
+			context.Items[Key] = read;
+		}
 
-        if (((PacketRead)read).TryRead(out var readResult, out var packet))
-        {
-            try
-            {
-                await context.PacketToParse.Writer.WriteAsync(packet.Value, token).ConfigureAwait(false);
-                await next.Invoke(context).ConfigureAwait(false);
-            }
-            finally
-            {
-                readResult.Value.Consume();
-            }
-        }
+		if (((PacketRead) read).TryRead(out var readResult, out var packet))
+		{
+			try
+			{
+				await context.PacketToParse.Writer.WriteAsync(packet.Value, token).ConfigureAwait(false);
+				await next.Invoke(context).ConfigureAwait(false);
+			}
+			finally
+			{
+				readResult.Value.Consume();
+			}
+		}
 
-        await next.Invoke(context).ConfigureAwait(false);
-    }
+		await next.Invoke(context).ConfigureAwait(false);
+	}
 }

@@ -6,25 +6,25 @@ namespace UniversalNet;
 
 public interface IConnectionContext<T> : IAsyncDisposable where T : notnull
 {
-    string ConnectionId { get; }
+	string ConnectionId { get; }
 
-    IDispatcher<T> Dispatcher { get; }
+	IDispatcher<T> Dispatcher { get; }
 
-    IPacketFormatters<T> Packetizer { get; }
+	IPacketFormatters<T> Packetizer { get; }
 
-    Channel<RawPacket<T>> PacketToParse { get; }
+	Channel<RawPacket<T>> PacketToParse { get; }
 
-    Channel<ParsedPacket<T>> PacketToDispatch { get; }
+	Channel<ParsedPacket<T>> PacketToDispatch { get; }
 
-    Channel<ParsedPacket<T>> PacketToSend { get; }
+	Channel<ParsedPacket<T>> PacketToSend { get; }
 
-    Channel<RawPacket<T>> PacketToWrite { get; }
+	Channel<RawPacket<T>> PacketToWrite { get; }
 
-    IDuplexPipe Transport { get; }
+	IDuplexPipe Transport { get; }
 
-    IDictionary<object, object?> Items { get; }
+	IDictionary<object, object?> Items { get; }
 
-    CancellationToken ConnectionClosed { get; }
+	CancellationToken ConnectionClosed { get; }
 
-    void Abort();
+	void Abort();
 }

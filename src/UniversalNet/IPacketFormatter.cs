@@ -8,7 +8,7 @@ namespace UniversalNet;
 /// </summary>
 public interface IPacketFormatter<T> where T : notnull
 {
-    object GetValue(T packetId, ReadOnlySequence<byte> packet);
+	object GetValue(T packetId, ReadOnlySequence<byte> packet);
 
-    Memory<byte> ToPacket(T packetId, object value);
+	Memory<byte> ToPacket(T packetId, object value);
 }
